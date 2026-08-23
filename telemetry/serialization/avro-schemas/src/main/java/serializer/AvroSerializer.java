@@ -14,9 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class AvroSerializer implements Serializer<SpecificRecordBase> {
+
     private final EncoderFactory encoderFactory;
     private final ThreadLocal<BinaryEncoder> encoderThreadLocal = new ThreadLocal<>();
-
     private static final Logger log = LoggerFactory.getLogger(AvroSerializer.class);
 
     public AvroSerializer() {
@@ -28,12 +28,12 @@ public class AvroSerializer implements Serializer<SpecificRecordBase> {
         if (data == null) {
             return null;
         }
-        try(ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             BinaryEncoder encoder = encoderFactory.binaryEncoder(out, encoderThreadLocal.get());
             encoderThreadLocal.set(encoder);
 
             DatumWriter<SpecificRecordBase> writer = new SpecificDatumWriter<>(data.getSchema());
-            writer.write(data,encoder);
+            writer.write(data, encoder);
             encoder.flush();
             byte[] bytes = out.toByteArray();
             log.debug("Data successfully serialized, size: {} bytes", bytes.length);
