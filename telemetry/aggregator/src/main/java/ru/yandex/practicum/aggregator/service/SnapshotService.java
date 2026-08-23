@@ -46,12 +46,14 @@ public class SnapshotService {
         SensorStateAvro oldState = snapshot.getSensorsState().get(sensorId);
 
         if (oldState != null) {
-            if (oldState.getTimestamp().isAfter(event.getTimestamp()) ||
-                    oldState.getTimestamp().equals(event.getTimestamp()) ||
-                    Objects.equals(oldState.getData(), event.getPayload())) {
-
-                log.debug("Ignoring event: sensor={}, old_timestamp={}, event_timestamp={}",
+            if (oldState.getTimestamp().isAfter(event.getTimestamp())) {
+                log.debug("Ignoring outdated event: sensor={}, old_timestamp={}, event_timestamp={}",
                         sensorId, oldState.getTimestamp(), event.getTimestamp());
+                return Optional.empty();
+            }
+
+            if (Objects.equals(oldState.getData(), event.getPayload())) {
+                log.debug("Ignoring event with unchanged data: sensor={}", sensorId);
                 return Optional.empty();
             }
         }
