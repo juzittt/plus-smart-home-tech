@@ -31,7 +31,8 @@ public class ScenarioCondition {
     private Sensor sensor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "condition_id", insertable = false, updatable = false)
+    @MapsId("conditionId")
+    @JoinColumn(name = "condition_id")
     private Condition condition;
 
     public ScenarioCondition(Scenario scenario, Sensor sensor, Condition condition) {
