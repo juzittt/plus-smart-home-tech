@@ -22,7 +22,7 @@ public class BaseAvroDeserializer<T extends SpecificRecordBase> implements Deser
     private final Schema schema;
     private final SpecificDatumReader<T> reader;
 
-    public BaseAvroDeserializer (Schema schema) {
+    public BaseAvroDeserializer(Schema schema) {
         this(DecoderFactory.get(), schema);
     }
 
