@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SensorRepository extends JpaRepository<Sensor, Long> {
+public interface SensorRepository extends JpaRepository<Sensor, String> {
 
     Optional<Sensor> findByIdAndHubId(String id, String hubId);
 
