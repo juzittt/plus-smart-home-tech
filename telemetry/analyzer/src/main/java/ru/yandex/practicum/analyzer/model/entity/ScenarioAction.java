@@ -1,13 +1,6 @@
 package ru.yandex.practicum.analyzer.model.entity;
 
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +31,7 @@ public class ScenarioAction {
     private Sensor sensor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "action_id")
+    @JoinColumn(name = "action_id", insertable = false, updatable = false)
     private Action action;
 
     public ScenarioAction(Scenario scenario, Sensor sensor, Action action) {
@@ -53,10 +46,8 @@ public class ScenarioAction {
     @NoArgsConstructor
     @EqualsAndHashCode
     public static class ScenarioActionId implements Serializable {
-
         private Long scenarioId;
         private String sensorId;
         private Long actionId;
-
     }
 }

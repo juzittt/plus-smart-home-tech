@@ -31,7 +31,7 @@ public class ScenarioCondition {
     private Sensor sensor;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "condition_id")
+    @JoinColumn(name = "condition_id", insertable = false, updatable = false)
     private Condition condition;
 
     public ScenarioCondition(Scenario scenario, Sensor sensor, Condition condition) {
@@ -46,10 +46,8 @@ public class ScenarioCondition {
     @NoArgsConstructor
     @EqualsAndHashCode
     public static class ScenarioConditionId implements Serializable {
-
         private Long scenarioId;
         private String sensorId;
         private Long conditionId;
-
     }
 }
