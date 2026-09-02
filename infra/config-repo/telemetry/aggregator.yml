@@ -1,8 +1,3 @@
-aggregator:
-  kafka:
-    consumer:
-      poll-timeout: 100ms
-
 spring:
   kafka:
     bootstrap-servers: localhost:9092
