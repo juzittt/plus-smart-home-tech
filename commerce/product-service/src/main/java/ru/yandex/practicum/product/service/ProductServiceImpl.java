@@ -58,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductDto> search(String query) {
         log.debug("Searching products: query='{}'", query);
         List<ProductDto> result = productRepository
-                .findByActiveTrueAndNameContainingIgnoreCase(query)
+                .searchByName(query)
                 .stream()
                 .map(this::toDto)
                 .toList();
