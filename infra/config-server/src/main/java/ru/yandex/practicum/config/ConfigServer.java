@@ -1,4 +1,4 @@
-package ru.yandex.practicum.config_server;
+package ru.yandex.practicum.config;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

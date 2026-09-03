@@ -5,11 +5,10 @@ spring:
 
 logging:
   level:
-    ru.yandex.practicum.telemetry: WARN
-    org:
-      springframework: ERROR
-      apache.kafka: WARN
-      hibernate.SQL: DEBUG
+    'ru.yandex.practicum.telemetry': WARN
+    'org.springframework': ERROR    # ✅ Кавычки обязательны!
+    'org.apache.kafka': WARN
+    'org.hibernate.SQL': DEBUG
 
 kafka:
   bootstrap-servers: "localhost:9092"
