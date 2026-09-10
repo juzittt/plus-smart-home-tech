@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum OrderStatus {
 
-    CREATED("Заказ создан и ожидает обработки");
+    CREATED("Заказ создан и ожидает обработки"),
+    CONFIRMED("Заказ подтверждён, товары зарезервированы"),
+    CANCELLED("Заказ отменён"),
+    COMPLETED("Заказ выполнен");
 
     private final String description;
 }

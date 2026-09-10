@@ -107,6 +107,29 @@ public class InventoryServiceImpl implements InventoryService {
                 "Stock reserved successfully");
     }
 
+    @Override
+    @Transactional
+    public ReserveResponse release(ReserveRequest request) {
+        log.info("Releasing reservation: productId={}, quantity={}",
+                request.productId(), request.quantity());
+
+        InventoryItem item = findByProductIdOrThrow(request.productId());
+
+        if (item.getReservedQuantity() < request.quantity()) {
+            throw new IllegalArgumentException(String.format(
+                    "Невозможно снять резерв: productId=%d, зарезервировано=%d, запрошено=%d",
+                    request.productId(), item.getReservedQuantity(), request.quantity()));
+        }
+
+        item.setReservedQuantity(item.getReservedQuantity() - request.quantity());
+        InventoryItem saved = inventoryRepository.save(item);
+
+        return new ReserveResponse(
+                true,
+                saved.getAvailableQuantity(),
+                "Резерв успешно снят");
+    }
+
     private InventoryItem findByProductIdOrThrow(Long productId) {
         return inventoryRepository.findByProductId(productId)
                 .orElseThrow(() -> {
