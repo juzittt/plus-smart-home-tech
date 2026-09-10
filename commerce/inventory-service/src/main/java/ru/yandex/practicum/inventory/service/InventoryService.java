@@ -1,9 +1,9 @@
 package ru.yandex.practicum.inventory.service;
 
-import ru.yandex.practicum.inventory.dto.InventoryDto;
-import ru.yandex.practicum.inventory.dto.ReserveRequest;
-import ru.yandex.practicum.inventory.dto.ReserveResponse;
-import ru.yandex.practicum.inventory.dto.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.InventoryDto;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveResponse;
+import ru.yandex.practicum.commerce.api.inventory.UpdateInventoryRequest;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.order.dto;
+package ru.yandex.practicum.commerce.api.order;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;

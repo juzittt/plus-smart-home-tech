@@ -1,4 +1,4 @@
-package ru.yandex.practicum.order.dto;
+package ru.yandex.practicum.commerce.api.order;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;

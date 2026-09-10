@@ -5,10 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.inventory.dto.InventoryDto;
-import ru.yandex.practicum.inventory.dto.ReserveRequest;
-import ru.yandex.practicum.inventory.dto.ReserveResponse;
-import ru.yandex.practicum.inventory.dto.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.InventoryDto;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveResponse;
+import ru.yandex.practicum.commerce.api.inventory.UpdateInventoryRequest;
 import ru.yandex.practicum.inventory.service.InventoryService;
 
 import java.util.List;

@@ -1,24 +1,23 @@
-package ru.yandex.practicum.product.dto;
+package ru.yandex.practicum.commerce.api.product;
 
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 
-public record UpdateProductRequest(
+public record CreateProductRequest(
 
+        @NotBlank(message = "Название товара обязательно")
         @Size(max = 255, message = "Название не может быть длиннее 255 символов")
         String name,
 
         @Size(max = 2000, message = "Описание не может быть длиннее 2000 символов")
         String description,
 
+        @NotNull(message = "Цена обязательна")
         @DecimalMin(value = "0.01", message = "Цена должна быть больше нуля")
         BigDecimal price,
 
         Long categoryId,
 
-        String imageUrl,
-
-        Boolean active
+        String imageUrl
 ) {
 }
