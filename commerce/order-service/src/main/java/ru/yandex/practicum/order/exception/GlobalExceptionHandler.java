@@ -1,5 +1,6 @@
 package ru.yandex.practicum.order.exception;
 
+import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,5 +39,25 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleGeneral(Exception e) {
         log.error("Внутренняя ошибка сервера", e);
         return new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Внутренняя ошибка сервера");
+    }
+
+    @ExceptionHandler(OrderProcessingException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleOrderProcessing(OrderProcessingException e) {
+        log.warn("Order processing failed: {}", e.getMessage());
+        return new ErrorResponse(422, e.getMessage());
+    }
+
+    @ExceptionHandler(FeignException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleFeignException(FeignException e) {
+        log.warn("External service call failed: status={}, message={}",
+                e.status(), e.getMessage());
+        String message = switch (e.status()) {
+            case 404 -> "Связанный ресурс не найден";
+            case 409 -> "Конфликт при обработке заказа";
+            default -> "Ошибка взаимодействия с внешним сервисом";
+        };
+        return new ErrorResponse(422, message);
     }
 }

@@ -1,8 +1,9 @@
 package ru.yandex.practicum.product.service;
 
-import ru.yandex.practicum.product.dto.CreateProductRequest;
-import ru.yandex.practicum.product.dto.ProductDto;
-import ru.yandex.practicum.product.dto.UpdateProductRequest;
+
+import ru.yandex.practicum.commerce.api.product.CreateProductRequest;
+import ru.yandex.practicum.commerce.api.product.ProductDto;
+import ru.yandex.practicum.commerce.api.product.UpdateProductRequest;
 
 import java.util.List;
 

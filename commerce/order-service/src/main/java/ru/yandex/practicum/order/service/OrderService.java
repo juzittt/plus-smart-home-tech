@@ -1,7 +1,7 @@
 package ru.yandex.practicum.order.service;
 
-import ru.yandex.practicum.order.dto.CreateOrderRequest;
-import ru.yandex.practicum.order.dto.OrderDto;
+import ru.yandex.practicum.commerce.api.order.CreateOrderRequest;
+import ru.yandex.practicum.commerce.api.order.OrderDto;
 
 import java.util.List;
 

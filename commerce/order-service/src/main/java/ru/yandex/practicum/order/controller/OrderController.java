@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.order.dto.CreateOrderRequest;
-import ru.yandex.practicum.order.dto.OrderDto;
+import ru.yandex.practicum.commerce.api.order.CreateOrderRequest;
+import ru.yandex.practicum.commerce.api.order.OrderDto;
 import ru.yandex.practicum.order.service.OrderService;
 
 import java.util.List;
