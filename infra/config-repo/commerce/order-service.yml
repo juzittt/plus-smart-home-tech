@@ -46,6 +46,21 @@ management:
           inventory-service:
             connectTimeout: 3000
             readTimeout: 5000
+      circuitBreaker:
+        enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 3s
 
 logging:
   level:
