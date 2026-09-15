@@ -15,15 +15,16 @@ import ru.yandex.practicum.commerce.api.product.ProductDto;
 import ru.yandex.practicum.order.entity.Order;
 import ru.yandex.practicum.order.entity.OrderItem;
 import ru.yandex.practicum.order.entity.OrderStatus;
+import ru.yandex.practicum.order.exception.InventoryServiceUnavailableException;
 import ru.yandex.practicum.order.exception.NotFoundException;
 import ru.yandex.practicum.order.exception.OrderProcessingException;
+import ru.yandex.practicum.order.exception.ProductServiceUnavailableException;
 import ru.yandex.practicum.order.feign.InventoryClient;
 import ru.yandex.practicum.order.feign.ProductClient;
 import ru.yandex.practicum.order.repository.OrderRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,35 +78,61 @@ public class OrderServiceImpl implements OrderService {
 
         Map<Long, Integer> quantityByProductId = aggregateQuantities(request.items());
 
-        Map<Long, ProductDto> productsById = fetchProducts(quantityByProductId.keySet());
+        Map<Long, ServiceCallResult<ProductDto>> productResults =
+                fetchProductResults(quantityByProductId.keySet());
 
-        validateProductsActive(productsById);
+        for (ServiceCallResult<ProductDto> result : productResults.values()) {
+            if (result instanceof ServiceCallResult.Failure<?>(String reason)) {
+                throw new OrderProcessingException(reason);
+            }
+        }
 
-        List<Long> reservedProductIds = new ArrayList<>();
+        boolean catalogDegraded = productResults.values().stream()
+                .anyMatch(ServiceCallResult::isDegraded);
+
+        Map<Long, ServiceCallResult<Boolean>> reservationResults = catalogDegraded
+                ? emptyReservations(quantityByProductId.keySet())
+                : reserveAll(quantityByProductId);
+
+        for (ServiceCallResult<Boolean> result : reservationResults.values()) {
+            if (result instanceof ServiceCallResult.Failure<?>(String reason)) {
+                compensateSuccessfulReservations(reservationResults, quantityByProductId);
+                throw new OrderProcessingException(reason);
+            }
+        }
+
+        boolean inventoryDegraded = reservationResults.values().stream()
+                .anyMatch(ServiceCallResult::isDegraded);
+
+        OrderStatus finalStatus = (catalogDegraded || inventoryDegraded)
+                ? OrderStatus.PENDING_CONFIRMATION
+                : OrderStatus.CONFIRMED;
+
         try {
-            reserveAll(quantityByProductId, reservedProductIds);
-
             Order saved = transactionTemplate.execute(status -> {
-                Order order = buildOrder(request, productsById);
+                Order order = buildOrder(request, productResults, finalStatus);
                 return orderRepository.save(order);
             });
 
             if (saved == null) {
-                throw new OrderProcessingException("Не удалось сохранить заказ");
+                throw new OrderProcessingException("Failed to save order");
             }
 
-            log.info("Order confirmed: id={}, email={}, totalPrice={}",
-                    saved.getId(), saved.getCustomerEmail(), saved.getTotalPrice());
+            log.info("Order saved: id={}, status={}, email={}, totalPrice={}",
+                    saved.getId(), saved.getStatus(),
+                    saved.getCustomerEmail(), saved.getTotalPrice());
             return toDto(saved);
 
         } catch (Exception e) {
-            compensateReservations(reservedProductIds, quantityByProductId);
+            if (finalStatus == OrderStatus.CONFIRMED) {
+                compensateSuccessfulReservations(reservationResults, quantityByProductId);
+            }
 
-            if (e instanceof OrderProcessingException) {
-                throw e;
+            if (e instanceof OrderProcessingException ope) {
+                throw ope;
             }
             throw new OrderProcessingException(
-                    "Не удалось создать заказ: " + e.getMessage(), e);
+                    "Failed to create order: " + e.getMessage(), e);
         }
     }
 
@@ -117,69 +144,102 @@ public class OrderServiceImpl implements OrderService {
                         Integer::sum));
     }
 
-    private Map<Long, ProductDto> fetchProducts(Set<Long> productIds) {
-        Map<Long, ProductDto> result = new HashMap<>();
+    private Map<Long, ServiceCallResult<ProductDto>> fetchProductResults(Set<Long> productIds) {
+        Map<Long, ServiceCallResult<ProductDto>> results = new HashMap<>();
+
         for (Long productId : productIds) {
             try {
                 ProductDto product = productClient.getProductById(productId);
-                result.put(productId, product);
+
+                if (product.active() == null || !product.active()) {
+                    log.warn("Product is not active: productId={}", productId);
+                    results.put(productId, new ServiceCallResult.Failure<>(
+                            "Product is not active: productId=" + productId));
+                } else {
+                    results.put(productId, new ServiceCallResult.Success<>(product));
+                }
+
             } catch (FeignException.NotFound e) {
                 log.warn("Product not found: productId={}", productId);
-                throw new OrderProcessingException(
-                        "Товар не найден: productId=" + productId);
+                results.put(productId, new ServiceCallResult.Failure<>(
+                        "Product not found: productId=" + productId));
+
+            } catch (ProductServiceUnavailableException e) {
+                log.warn("Product service unavailable: productId={}", productId);
+                results.put(productId, new ServiceCallResult.Degraded<>(
+                        "Product service unavailable: productId=" + productId));
+
             } catch (FeignException e) {
                 log.error("Failed to fetch product {}: status={}, message={}",
                         productId, e.status(), e.getMessage());
-                throw new OrderProcessingException(
-                        "Ошибка получения данных товара: productId=" + productId, e);
+                results.put(productId, new ServiceCallResult.Degraded<>(
+                        "Product service error: productId=" + productId));
             }
         }
-        return result;
+
+        return results;
     }
 
-    private void validateProductsActive(Map<Long, ProductDto> products) {
-        for (Map.Entry<Long, ProductDto> entry : products.entrySet()) {
-            Long id = entry.getKey();
-            ProductDto product = entry.getValue();
-            if (product.active() == null || !product.active()) {
-                log.warn("Product is not active: productId={}", id);
-                throw new OrderProcessingException(
-                        "Товар снят с продажи: productId=" + id);
-            }
+    private Map<Long, ServiceCallResult<Boolean>> emptyReservations(Set<Long> productIds) {
+        Map<Long, ServiceCallResult<Boolean>> results = new HashMap<>();
+        for (Long productId : productIds) {
+            results.put(productId, new ServiceCallResult.Degraded<>(
+                    "Skipped due to catalog unavailability"));
         }
+        return results;
     }
 
-    private void reserveAll(Map<Long, Integer> quantities, List<Long> reservedIds) {
+    private Map<Long, ServiceCallResult<Boolean>> reserveAll(Map<Long, Integer> quantities) {
+        Map<Long, ServiceCallResult<Boolean>> results = new HashMap<>();
+
         for (Map.Entry<Long, Integer> entry : quantities.entrySet()) {
             Long productId = entry.getKey();
             Integer qty = entry.getValue();
 
             try {
                 inventoryClient.reserveStock(new ReserveRequest(productId, qty));
-                reservedIds.add(productId);
+                results.put(productId, new ServiceCallResult.Success<>(true));
                 log.info("Reserved: productId={}, quantity={}", productId, qty);
+
             } catch (FeignException.NotFound e) {
                 log.warn("Inventory record not found: productId={}", productId);
-                throw new OrderProcessingException(
-                        "Складская запись не найдена: productId=" + productId);
+                results.put(productId, new ServiceCallResult.Failure<>(
+                        "Inventory record not found: productId=" + productId));
+
             } catch (FeignException.Conflict e) {
                 log.warn("Insufficient stock: productId={}, requested={}", productId, qty);
-                throw new OrderProcessingException(
-                        "Недостаточно товара: productId=" + productId);
+                results.put(productId, new ServiceCallResult.Failure<>(
+                        "Insufficient stock: productId=" + productId));
+
+            } catch (InventoryServiceUnavailableException e) {
+                log.warn("Inventory service unavailable: productId={}", productId);
+                results.put(productId, new ServiceCallResult.Degraded<>(
+                        "Inventory service unavailable: productId=" + productId));
+
             } catch (FeignException e) {
                 log.error("Failed to reserve product {}: status={}, message={}",
                         productId, e.status(), e.getMessage());
-                throw new OrderProcessingException(
-                        "Ошибка резервирования товара: productId=" + productId, e);
+                results.put(productId, new ServiceCallResult.Degraded<>(
+                        "Inventory service error: productId=" + productId));
             }
         }
+
+        return results;
     }
 
-    private void compensateReservations(List<Long> reservedIds,
-                                        Map<Long, Integer> quantities) {
+    private void compensateSuccessfulReservations(
+            Map<Long, ServiceCallResult<Boolean>> reservationResults,
+            Map<Long, Integer> quantities) {
+
+        List<Long> reservedIds = reservationResults.entrySet().stream()
+                .filter(e -> e.getValue().isSuccess())
+                .map(Map.Entry::getKey)
+                .toList();
+
         if (reservedIds.isEmpty()) {
             return;
         }
+
         log.warn("Compensating reservations for {} products", reservedIds.size());
         for (Long productId : reservedIds) {
             try {
@@ -194,27 +254,36 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private Order buildOrder(CreateOrderRequest request,
-                             Map<Long, ProductDto> products) {
+                             Map<Long, ServiceCallResult<ProductDto>> productResults,
+                             OrderStatus status) {
         Order order = new Order();
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
-        order.setStatus(OrderStatus.CONFIRMED);
-        order.setStatusDetails(OrderStatus.CONFIRMED.getDescription());
+        order.setStatus(status);
+        order.setStatusDetails(status == OrderStatus.PENDING_CONFIRMATION
+                ? "Order requires manual verification: some data is unavailable"
+                : status.getDescription());
         order.setCreatedAt(LocalDateTime.now());
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (OrderItemRequest item : request.items()) {
-            ProductDto product = products.get(item.productId());
-            BigDecimal price = product.price();
-            BigDecimal lineTotal = price.multiply(BigDecimal.valueOf(item.quantity()));
-            totalPrice = totalPrice.add(lineTotal);
-
+            ServiceCallResult<ProductDto> result = productResults.get(item.productId());
             OrderItem orderItem = new OrderItem();
             orderItem.setProductId(item.productId());
-            orderItem.setProductName(product.name());
             orderItem.setQuantity(item.quantity());
-            orderItem.setPrice(price);
+
+            ProductDto product = result.getValueOrNull();
+            if (product != null) {
+                orderItem.setProductName(product.name());
+                orderItem.setPrice(product.price());
+                BigDecimal lineTotal = product.price()
+                        .multiply(BigDecimal.valueOf(item.quantity()));
+                totalPrice = totalPrice.add(lineTotal);
+            } else {
+                orderItem.setProductName("Product #" + item.productId() + " (pending verification)");
+                orderItem.setPrice(BigDecimal.ZERO);
+            }
             order.addItem(orderItem);
         }
 
