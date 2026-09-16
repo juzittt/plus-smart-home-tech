@@ -6,7 +6,7 @@ spring:
 logging:
   level:
     'ru.yandex.practicum.telemetry': WARN
-    'org.springframework': ERROR    # ✅ Кавычки обязательны!
+    'org.springframework': ERROR
     'org.apache.kafka': WARN
     'org.hibernate.SQL': DEBUG
 

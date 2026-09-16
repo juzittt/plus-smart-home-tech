@@ -5,8 +5,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
 import ru.yandex.practicum.commerce.api.inventory.ReserveResponse;
+import ru.yandex.practicum.order.feign.fallback.InventoryClientFallbackFactory;
 
-@FeignClient(name = "inventory-service")
+@FeignClient(
+        name = "inventory-service",
+        fallbackFactory = InventoryClientFallbackFactory.class
+)
 public interface InventoryClient {
 
     @PostMapping("/api/inventory/reserve")
