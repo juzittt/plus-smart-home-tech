@@ -9,8 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.yandex.practicum.inventory.dto.ReserveRequest;
-import ru.yandex.practicum.inventory.dto.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
+import ru.yandex.practicum.commerce.api.inventory.UpdateInventoryRequest;
 
 import java.util.Map;
 
@@ -54,8 +54,8 @@ class InventoryServiceAcceptanceTest {
                 .isEqualTo(10);
 
         MvcResult updateResponse = mvc.perform(put("/api/inventory")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json.writeValueAsString(new UpdateInventoryRequest(productId, 15))))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(new UpdateInventoryRequest(productId, 15))))
                 .andReturn();
 
         assertThat(status(updateResponse))
@@ -118,8 +118,8 @@ class InventoryServiceAcceptanceTest {
 
     private MvcResult postJson(String url, Object body) throws Exception {
         return mvc.perform(post(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json.writeValueAsString(body)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(body)))
                 .andReturn();
     }
 

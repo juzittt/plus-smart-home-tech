@@ -9,9 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.yandex.practicum.product.dto.CreateCategoryRequest;
-import ru.yandex.practicum.product.dto.CreateProductRequest;
-import ru.yandex.practicum.product.dto.UpdateProductRequest;
+import ru.yandex.practicum.commerce.api.product.CreateCategoryRequest;
+import ru.yandex.practicum.commerce.api.product.CreateProductRequest;
+import ru.yandex.practicum.commerce.api.product.UpdateProductRequest;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -153,8 +153,8 @@ class ProductServiceAcceptanceTest {
 
     private MvcResult postJson(String url, Object body) throws Exception {
         return mvc.perform(post(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json.writeValueAsString(body)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json.writeValueAsString(body)))
                 .andReturn();
     }
 

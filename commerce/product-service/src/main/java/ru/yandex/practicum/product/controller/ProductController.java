@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.product.dto.CreateProductRequest;
-import ru.yandex.practicum.product.dto.ProductDto;
-import ru.yandex.practicum.product.dto.UpdateProductRequest;
+import ru.yandex.practicum.commerce.api.product.CreateProductRequest;
+import ru.yandex.practicum.commerce.api.product.ProductDto;
+import ru.yandex.practicum.commerce.api.product.UpdateProductRequest;
 import ru.yandex.practicum.product.service.ProductService;
 
 import java.util.List;

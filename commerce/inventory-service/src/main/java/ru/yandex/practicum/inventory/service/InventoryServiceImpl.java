@@ -4,10 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.yandex.practicum.inventory.dto.InventoryDto;
-import ru.yandex.practicum.inventory.dto.ReserveRequest;
-import ru.yandex.practicum.inventory.dto.ReserveResponse;
-import ru.yandex.practicum.inventory.dto.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.InventoryDto;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveResponse;
+import ru.yandex.practicum.commerce.api.inventory.UpdateInventoryRequest;
 import ru.yandex.practicum.inventory.entity.InventoryItem;
 import ru.yandex.practicum.inventory.exception.InsufficientStockException;
 import ru.yandex.practicum.inventory.exception.NotFoundException;
@@ -105,6 +105,29 @@ public class InventoryServiceImpl implements InventoryService {
                 true,
                 saved.getAvailableQuantity(),
                 "Stock reserved successfully");
+    }
+
+    @Override
+    @Transactional
+    public ReserveResponse release(ReserveRequest request) {
+        log.info("Releasing reservation: productId={}, quantity={}",
+                request.productId(), request.quantity());
+
+        InventoryItem item = findByProductIdOrThrow(request.productId());
+
+        if (item.getReservedQuantity() < request.quantity()) {
+            throw new IllegalArgumentException(String.format(
+                    "Невозможно снять резерв: productId=%d, зарезервировано=%d, запрошено=%d",
+                    request.productId(), item.getReservedQuantity(), request.quantity()));
+        }
+
+        item.setReservedQuantity(item.getReservedQuantity() - request.quantity());
+        InventoryItem saved = inventoryRepository.save(item);
+
+        return new ReserveResponse(
+                true,
+                saved.getAvailableQuantity(),
+                "Резерв успешно снят");
     }
 
     private InventoryItem findByProductIdOrThrow(Long productId) {
