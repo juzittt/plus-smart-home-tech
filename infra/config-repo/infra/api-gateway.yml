@@ -5,13 +5,11 @@ app:
   security:
     users:
       - username: ivan
-        # "ivan" в BCrypt (сгенерировано один раз)
-        password: "$2a$10$EqKcp1WFKVQISheBxMdyoOKy6rRjPM5v6yGkOw8wJzB6vQrHv2pGy"
+        password: "{bcrypt}$2a$10$EqKcp1WFKVQISheBxMdyoOKy6rRjPM5v6yGkOw8wJzB6vQrHv2pGy"
         roles:
           - USER
       - username: anna
-        # "anna" в BCrypt
-        password: "$2a$10$rD4yM5yYxQ7K9e4JQwZJQOe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJ"
+        password: "{bcrypt}$2a$10$rD4yM5yYxQ7K9e4JQwZJQOe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJ"
         roles:
           - USER
           - ADMIN
