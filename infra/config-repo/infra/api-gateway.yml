@@ -1,6 +1,19 @@
 server:
   port: 8080
 
+app:
+  security:
+    users:
+      - username: ivan
+        password: "{bcrypt}$2a$10$EqKcp1WFKVQISheBxMdyoOKy6rRjPM5v6yGkOw8wJzB6vQrHv2pGy"
+        roles:
+          - USER
+      - username: anna
+        password: "{bcrypt}$2a$10$rD4yM5yYxQ7K9e4JQwZJQOe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJ"
+        roles:
+          - USER
+          - ADMIN
+
 spring:
   cloud:
     gateway:
